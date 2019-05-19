@@ -14,16 +14,22 @@ __date__ = "17.5.2019"
 
 class am_classifier:
 
-	def __init__(self,D):
+	def __init__(self,D,code):
 		'''	
 		
 		Parameters
 		----------
 		D : int 
 			HD dimension 
+		encode: hd_encoding class
+			encoding class 
 		'''
 
 		self._n_classes = 1
+		self._D = D 
+
+		self._code = code
+
 
 	def fit(self,X,y):
 		'''	
@@ -38,7 +44,6 @@ class am_classifier:
 		'''
 		n_samples,_ = X.shape
 		self._n_classes = t.max(y)+1
-
 		self._am = t.Tensor(self._n_classes,D).zero_()
 		cnt = t.Tensor(self._n_classes).zero_()
 
@@ -46,8 +51,9 @@ class am_classifier:
 		for sample in range(n_samples): 
 			y_s = y[sample]
 			if (y_s < self._n_classes) and (y_s >= 0):
-				self._am[y_s] = am_[y_s] + X[sample]
-				cnt[y_s] += 1
+				enc_vec, n_add = self._code.encode(X[sample])
+				self._am[y_s] = am_[y_s] + enc_vec
+				cnt[y_s] += n_add
 			else: 
 				raise ValueError("Label is not in range of [{:},{:}], got {:}".format(0,self._n_classes,y_s))
 
@@ -56,7 +62,7 @@ class am_classifier:
 
 			# break ties randomly by adding random vector to 
 			if cnt[y_s] % 2 == 0: 
-				self._am[y_s].add_(t.Tensor(D).bernoulli_()) # add random vector 
+				self._am[y_s].add_(t.randint(0,2,(D,)).bernoulli()) # add random vector 
 				cnt[y_s] += 1
 
 			self._am[y_s] = self._am[y_s] > int(cnt[y_s]/2)
@@ -85,6 +91,8 @@ class am_classifier:
 		hd_dist = t.Tensor(n_samples,self._n_classes)
 
 		for sample in range(n_samples): 
+			# encode samples 
+			enc_vec, _ = self._code.encode(X[sample],True)
 			# calculate hamming distance for every class
 			for y_s in range(self._n_classes): 
 				hd_dist[y_s] = 1-t.sum(X[sample] == self._am[y_s])/ float(D)
