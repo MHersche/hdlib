@@ -42,7 +42,7 @@ class hd_encode:
 			raise ValueError("No valid encoding! got "+ code)
 
 		# item memory initialization 
-		self._itemMemory = t.randint(0,2,(nitem,D)).bernoulli()
+		self._itemMemory = t.randint(0,2,(nitem,D))
 
 
 		return 
