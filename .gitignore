@@ -1,1 +1,5 @@
 condaenv/*
+examples/language_classif/data/*
+examples/language_classif/__pycache__/*
+pyhdlib/__pycache__/*
+
