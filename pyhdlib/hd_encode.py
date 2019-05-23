@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 
 ''' 
+=================
 HD encoding class
+=================
 '''
 import torch as t 
 
@@ -12,8 +14,8 @@ __date__ = "17.5.2019"
 
 
 
-class hd_encode:
-	def __init__(self,D,encoding,nitem=1,ngramm = 3):
+class hd_encode():
+	def __init__(self,D,encoding,device,nitem=1,ngramm = 3):
 		'''	
 		Encoding 
 		Parameters
@@ -28,21 +30,21 @@ class hd_encode:
 		
 		'''
 		self._D = D
-
+		self._device = device
 		# encoding scheme 
 		if encoding =="sumNgramm":
 			self.encode = self._compute_sumNgramm 
 			self._ngramm = ngramm
 			# malloc for Ngramm block, ngramm result, and sum vector  
-			self._block = t.Tensor(self._ngramm,self._D).zero_()
-			self._Y = t.Tensor(self._D)
-			self._SumVec= t.Tensor(self._D).zero_()
+			self._block = t.Tensor(self._ngramm,self._D).zero_().to(self._device)
+			self._Y = t.Tensor(self._D).to(self._device)
+			self._SumVec= t.Tensor(self._D).zero_().to(self._device)
 
 		else: 
 			raise ValueError("No valid encoding! got "+ code)
 
 		# item memory initialization 
-		self._itemMemory = t.randint(0,2,(nitem,D))
+		self._itemMemory = t.randint(0,2,(nitem,D)).to(self._device)
 
 
 		return 
@@ -73,13 +75,19 @@ class hd_encode:
 
 		'''
 		# reset block to zero
-		self._block.zero_()
+		self._block.zero_().to(self._device)
+		self._SumVec.zero_()
+
 
 		n_samlpes,n_feat = X.shape
+		
+		for feat_idx in range(n_feat): 
+			self._SumVec.add_(self._ngrammencoding(X[0],feat_idx))
 
-		for i in range(n_feat): 
-			self._SumVec._add(self._ngrammencoding(X,i))
-
+		if clip: 
+			self._SumVec = self._threshold(self._SumVec,n_feat)
+			n_feat = 1
+			
 		# put here clipping option 
 		return self._SumVec, n_feat
 
@@ -94,7 +102,7 @@ class hd_encode:
 
 		Results
 		-------
-		Y: Torch tensor, size = [n_samples-n]
+		Y: Torch tensor, size = [D,]
 		'''
 
 		# rotate shift current block 
@@ -124,7 +132,7 @@ class hd_encode:
 		-------
 		Y: Torch tensor, size = [n_samples-n]
 		'''
-		return torch.cat((X[-n:], X[:-n]))
+		return t.cat((X[-n:], X[:-n]))
 
 	def _bind(self,X1,X2): 
 		'''	
@@ -142,7 +150,30 @@ class hd_encode:
 		Y: Torch tensor, size = [D,]
 			bound vector
 		'''
-		return (X1 != X2)
+		# X1!= X2
+		return ((t.mul((-2*X1+1), (2*X2-1))+1)/2)
+
+	def _threshold(self,X,cnt):
+		'''	
+		Threshold a vector to binary 
+		Parameters
+		----------
+		X : Torch tensor, size = [D,]
+			input vector to be thresholded
+		cnt: int 
+			number of added binary vectors, used for determininig threshold 
+			
+		Results
+		-------
+		Y: Torch tensor, size = [D,]
+			thresholded vector
+		'''
+		# even 
+		if cnt % 2 == 0: 
+			X.add_(t.randint(0,2,(self._D,)).type(t.FloatTensor).to(self._device)) # add random vector 
+			cnt += 1
+		
+		return (X > (cnt/2)).type(t.cuda.FloatTensor)
 
 
 	
