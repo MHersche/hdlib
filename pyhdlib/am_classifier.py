@@ -13,7 +13,7 @@ __date__ = "17.5.2019"
 
 class am_classifier:
 
-	def __init__(self,D,code,device):
+	def __init__(self,D,_encoder,device):
 		'''	
 		
 		Parameters
@@ -27,7 +27,7 @@ class am_classifier:
 		self._n_classes = 1
 		self._D = D 
 
-		self._code = code
+		self._encoder = _encoder
 
 
 	def am_init(self,n_classes):
@@ -50,17 +50,21 @@ class am_classifier:
 
 		Parameters
 		----------
-		X: Torch tensor, size = [n_samples, n_feat]
+		X: numpy array, size = [n_samples, n_feat]
 			Training samples 
-		y: Torch tensor, size = [n_samples]
+		y: numpy array, size = [n_samples]
 			Training labels 
 		'''
+		X = t.from_numpy(X).type(t.LongTensor).to(self._device)
+		y = t.from_numpy(y).type(t.LongTensor).to(self._device)
+
+
 		n_samples = X.shape[0]
 		# summation of training vectors 
 		for sample in range(n_samples): 
 			y_s = y[sample]
 			if (y_s < self._n_classes) and (y_s >= 0):
-				enc_vec, n_add = self._code.encode(X[sample].view(1,-1))
+				enc_vec, n_add = self._encoder.encode(X[sample].view(1,-1))
 				self._am[y_s].add_(enc_vec)
 				self._cnt[y_s] += n_add
 			else: 
@@ -87,9 +91,9 @@ class am_classifier:
 
 		Parameters
 		----------
-		X: Torch tensor, size = [n_samples, n_feat]
+		X: numpy array, size = [n_samples, n_feat]
 			Training samples 
-		y: Torch tensor, size = [n_samples]
+		y: numpy array, size = [n_samples]
 			Training labels 
 		'''
 		n_samples,_ = X.shape
@@ -119,20 +123,21 @@ class am_classifier:
 			predicted values.
 
 		'''
+		X = t.from_numpy(X).type(t.LongTensor).to(self._device)
 		n_samples = X.shape[0]
 		dec_values = t.Tensor(n_samples).to(self._device)
 		hd_dist = t.Tensor(n_samples,self._n_classes).zero_().to(self._device)
 
 		for sample in range(n_samples): 
 			# encode samples 
-			enc_vec, _ = self._code.encode(X[sample].view(1,-1),True)
+			enc_vec, _ = self._encoder.encode(X[sample].view(1,-1),True)
 			# calculate hamming distance for every class
 			for y_s in range(self._n_classes): 
 				hd_dist[sample,y_s] = self.hamming_distance(enc_vec,self._am[y_s])
 
 			dec_values[sample] = t.argmin(hd_dist[sample])
 
-		return dec_values
+		return dec_values.cpu().numpy()
 	
 	
 	def hamming_distance(self,X1,X2):

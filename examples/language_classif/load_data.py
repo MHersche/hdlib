@@ -26,11 +26,11 @@ class load_data:
 		self._langLabels = {0:'afr', 1:'bul', 2:'ces', 3:'dan', 4:'nld', 
 		5:'deu', 6:'eng', 7:'est', 8:'fin', 9:'fra', 10:'ell', 11:'hun', 
 		12:'ita', 13:'lav', 14:'lit', 15:'pol', 16:'por', 17:'ron', 
-		18:'slk', 19:'slv', 19:'spa', 20:'swe'}
+		18:'slk', 19:'slv', 20:'spa', 21:'swe'}
 		_test_langLabels = {0:'af', 1:'bg', 2:'cs', 3:'da', 4:'nl', 
 			5:'de', 6:'en', 7:'et', 8:'fi', 9:'fr', 10:'el', 11:'hu', 
 			12:'it', 13:'lv', 14:'lt', 15:'pl', 16:'pt', 17:'ro', 
-			18:'sk', 19:'sl', 19:'es', 20:'sv'}
+			18:'sk', 19:'sl', 20:'es', 21:'sv'}
 		self._test_langLabels = dict([(value, key) for key, value in _test_langLabels.items()]) 
 
 		self._n_labels = len(self._langLabels)
@@ -66,7 +66,7 @@ class load_data:
 		else: 
 			self._tr_idx = 0
 			char_array = np.array((100,))
-		return char_array.view(np.uint8), np.array(self._tr_idx-1)
+		return char_array.view(np.uint8).reshape(1,-1), np.array(self._tr_idx-1).reshape(1,-1)
 
 	def get_test_item(self):
 		if self._test_idx < self._n_test_labels:
@@ -86,7 +86,7 @@ class load_data:
 			
 
 
-		return char_array.view(np.uint8), np.array(label)
+		return char_array.view(np.uint8).reshape(1,-1), np.array(label).reshape(1,-1)
 
 
 
