@@ -106,8 +106,8 @@ class hd_encode():
 		'''
 
 		# rotate shift current block 
-		for i in range(self._ngramm-1): 
-			self._block[i+1] = self._circshift(self._block[i],1)
+		for i in range(self._ngramm-1,0,-1): 
+			self._block[i] = self._circshift(self._block[i-1],1)
 		# write new first entry 
 		self._block[0] = self._lookupItemMemory(X[start])
 

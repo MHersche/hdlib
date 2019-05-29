@@ -29,7 +29,7 @@ testing = True
 dl = load_data()
 
 # init HD classifier 
-ngramm = 4
+ngramm = 3
 encoding = "sumNgramm"
 nitem = 256
 D = 10000
@@ -87,7 +87,7 @@ if testing:
 		if curr_err != 0:
 			print("Error: True class: {:}, Estimation: {:}".format(y,y_hat))
 			
-	print("Accuracy: {:}".format(1-err.type(t.FloatTensor)/n_test))
+	print("Accuracy: {:}".format(1-err/n_test))
 		
 
 ############################## Saving Model to binary #######################
