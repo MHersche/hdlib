@@ -14,6 +14,7 @@ __date__ = "20.5.2019"
 
 import time, sys, glob
 import numpy as np
+import pickle
 
 
 data_dir = 'data/'
@@ -21,7 +22,14 @@ data_dir = 'data/'
 class load_data:
 
 	def __init__(self): 
-	
+		'''
+		Update AM 
+
+		Return
+		----------
+		n_char: int
+			number of characters in text 
+		'''
 		# training files 
 		self._langLabels = {0:'afr', 1:'bul', 2:'ces', 3:'dan', 4:'nld', 
 		5:'deu', 6:'eng', 7:'est', 8:'fin', 9:'fra', 10:'ell', 11:'hun', 
@@ -37,12 +45,62 @@ class load_data:
 		self._tr_idx = 0
 		self._tr_path = data_dir + 'training_texts/'
 
+		# generate character to index file 
+		try:
+			pickle_in = open(data_dir + "models/charidx.pickle","rb")
+			self._chardict = pickle.load(pickle_in)
+
+		except:
+			print("Generate new char 2 index ")
+			self._genchar2idx()
+			pickle_out = open(data_dir + "models/charidx.pickle","wb")
+			pickle.dump(self._chardict, pickle_out)
+			pickle_out.close()
+
+		self._nitem = len(self._chardict)
 		# testing files 
 		self._testList = glob.glob(data_dir+"testing_texts/*.txt")
 		self._n_test_labels = len(self._testList)
 		self._test_idx = 0
+		
 
-		return 
+		return
+
+	def _genchar2idx(self): 
+		'''	
+		Generate character to index mapping from training files 		
+		'''
+
+		self._chardict = dict()
+		# go over all training files 
+		for tr_idx in range(self._n_labels):
+			fname=self._tr_path+self._langLabels[tr_idx]+'.txt'
+			F = open(fname)
+			string = F.read()
+			# sweep through whole dict and update 
+			for char in string: 
+				if not (char in self._chardict): 
+					self._chardict[char] = len(self._chardict)
+
+			F.close()
+
+	def _str2idx(self,string):
+		'''	
+		Convert string to array of indexes 
+		Return 
+		----------
+		X: numpy array size =[nstr,]
+		'''
+		nstr = len(string)
+		X = np.empty((nstr,),dtype = np.uint8)
+		for idx in range(nstr): 
+			if string[idx] in self._chardict:
+				X[idx] = self._chardict[string[idx]]
+			else: 
+				X[idx] = self._chardict[' ']
+
+		return X 
+
 
 
 	def get_train_item(self):
@@ -56,17 +114,17 @@ class load_data:
 			Label of text used in training 		
 		'''
 
-		if self._tr_idx < self._n_labels-1: 
+		if self._tr_idx < self._n_labels: 
 			fname=self._tr_path+self._langLabels[self._tr_idx]+'.txt'
 			F = open(fname)
 			string = F.read()
-			char_array = np.array(list(string),'c')
+			char_array = self._str2idx(string)
 			F.close()
 			self._tr_idx +=1
 		else: 
 			self._tr_idx = 0
-			char_array = np.array((100,))
-		return char_array.view(np.uint8).reshape(1,-1), np.array(self._tr_idx-1).reshape(1,-1)
+			char_array = np.array((2,))
+		return char_array.reshape(1,-1), np.array(self._tr_idx-1).reshape(1)
 
 	def get_test_item(self):
 		if self._test_idx < self._n_test_labels:
@@ -76,7 +134,7 @@ class load_data:
 			 
 			F = open(fname)
 			string = F.read()
-			char_array = np.array(list(string),'c')
+			char_array = self._str2idx(string)
 			F.close()
 			self._test_idx +=1
 
@@ -86,7 +144,7 @@ class load_data:
 			
 
 
-		return char_array.view(np.uint8).reshape(1,-1), np.array(label).reshape(1,-1)
+		return char_array.reshape(1,-1), np.array(label).reshape(1)
 
 
 

@@ -13,7 +13,6 @@ __date__ = "20.5.2019"
 
 
 import time, sys 
-import torch as t 
 import numpy as np
 
 
@@ -28,10 +27,11 @@ testing = True
 # data loader 
 dl = load_data()
 
+
 # init HD classifier 
 ngramm = 3
 encoding = "sumNgramm"
-nitem = 256
+nitem = dl._nitem
 D = 10000
 device = 'cuda:0'
 
@@ -64,7 +64,6 @@ if training:
 	hd.am_threshold()
 	hd.save()
 
-
 ########################## testing ########################################
 
 if testing: 
@@ -90,10 +89,7 @@ if testing:
 	print("Accuracy: {:}".format(1-err/n_test))
 		
 
-############################## Saving Model to binary #######################
-		
-	
-hd.save2binary_model()
+
 	
 
 

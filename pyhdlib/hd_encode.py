@@ -80,16 +80,20 @@ class hd_encode():
 
 
 		n_samlpes,n_feat = X.shape
+		add_cnt = 0
 		
 		for feat_idx in range(n_feat): 
-			self._SumVec.add_(self._ngrammencoding(X[0],feat_idx))
+			ngramm = self._ngrammencoding(X[0],feat_idx)
+			if feat_idx >= self._ngramm-1:
+				self._SumVec.add_(ngramm)
+				add_cnt +=1
 
 		if clip: 
-			self._SumVec = self._threshold(self._SumVec,n_feat)
-			n_feat = 1
+			self._SumVec = self._threshold(self._SumVec,add_cnt)
+			add_cnt = 1
 			
 		# put here clipping option 
-		return self._SumVec, n_feat
+		return self._SumVec, add_cnt
 
 	def _ngrammencoding(self,X,start):
 		'''	
@@ -113,6 +117,7 @@ class hd_encode():
 
 		# calculate ngramm of _block
 		self._Y = self._block[0]
+		
 		for i in range(1,self._ngramm):
 			self._Y = self._bind(self._Y,self._block[i])
 
