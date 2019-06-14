@@ -1,9 +1,7 @@
 # Language Classification Example 
 
-
-
 ## Getting Started
-Download the language classification Dataset and store the 'testing_texts' and 'training_texts' folder in 'data' folder.   
+Download the language classification Dataset under this [link](https://github.com/abbas-rahimi/HDC-Language-Recognition) and store the 'testing_texts' and 'training_texts' folder in 'data' folder.   
 
 ### Prerequisites
 Please install the python libraries described in the hdlib README. 
